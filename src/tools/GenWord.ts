@@ -22,12 +22,12 @@ export async function GenWords(input: string): Promise<GenWordsResult> {
         ],
     });
 
-    // @ts-ignore
+    // @ts-expect-error fix it later
     const englishWord = completion.choices[0].message.content.trim();
     console.log("Get word", englishWord)
 
     const image = await together.images.create({
-        model: "black-forest-labs/FLUX.1-dev",
+        model: "black-forest-labs/FLUX.1-schnell-Free",
         prompt: `a crayon pencil drawing by a child, cute, colorful, innocent, and simple, of a ${englishWord}`,
         response_format: "url",
     });
