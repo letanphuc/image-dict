@@ -1,12 +1,13 @@
 "use server";
 import Together from 'together-ai';
+import {GoogleGenImage} from "@/tools/GoogleGenImage";
 
 type GenWordsResult = {
     imageUrl: string;
     englishWord: string;
 };
 
-export async function GenWords(input: string): Promise<GenWordsResult> {
+export async function getEnglishWord(input: string): Promise<string> {
     const together = new Together();
 
     const completion = await together.chat.completions.create({
@@ -16,29 +17,39 @@ export async function GenWords(input: string): Promise<GenWordsResult> {
                 role: 'user',
                 content: `Translate the following Vietnamese words into English: "${input}".
                  Return only the English word. 
-                 If the word is a phrase, return the first word of the phrase. 
-                 If the word is "Pig's blood", return "Pig".`,
+                 Try to return the word you think is most suitable.`,
             },
         ],
     });
 
     // @ts-expect-error fix it later
-    const englishWord = completion.choices[0].message.content.trim();
-    console.log("Get word", englishWord)
+    return completion.choices[0].message.content.trim();
+}
+
+export async function generateImage(word: string): Promise<string> {
+    const together = new Together();
 
     const image = await together.images.create({
         model: "black-forest-labs/FLUX.1-schnell-Free",
-        prompt: `a crayon pencil drawing by a child, cute, colorful, innocent, and simple, of a ${englishWord}`,
-        response_format: "url",
+        prompt: `A crayon pencil drawing by a child, cute, colorful, innocent, and simple, of a ${word}`,
+        response_format: "base64",
         height: 512,
-        width: 512
+        width: 512,
+        n: 1,
+        steps: 4,
+        output_format: "png"
     });
+    console.log('image.data size', image.data[0].b64_json?.length);
 
-    const imageUrl = image.data[0].url || '';
-    console.log("Get image", imageUrl.length)
+    return 'data:image/png;base64,' + image.data[0].b64_json;
+}
 
-    return {
-        imageUrl,
-        englishWord,
-    };
+export async function GenWords(input: string): Promise<GenWordsResult> {
+    const englishWord = await getEnglishWord(input);
+    console.log("Get word", englishWord);
+
+    const imageUrl = await GoogleGenImage(englishWord);
+    console.log("Get image", imageUrl.length);
+
+    return {imageUrl, englishWord};
 }

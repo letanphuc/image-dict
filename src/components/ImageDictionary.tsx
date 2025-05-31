@@ -1,64 +1,63 @@
 "use client";
 
-import React, {useEffect, useState} from 'react';
-import SpeechRecognition, {useSpeechRecognition} from 'react-speech-recognition';
-import {GenWords} from "@/tools/GenWord";
+import React, {useEffect, useState} from "react";
+import SpeechRecognition, {useSpeechRecognition} from "react-speech-recognition";
 import Image from "next/image";
-import {Button, IconButton, Typography} from "@mui/material";
+import {Button, CircularProgress, IconButton, Typography} from "@mui/material";
+import {GoogleEnglishWord, GoogleGenImage} from "@/tools/GoogleGenImage";
+import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 
-const speak = (word: string) => {
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = 'en-US';
+const speak = (text: string) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
     speechSynthesis.speak(utterance);
 };
 
-function PlayArrowIcon() {
-    return null;
-}
-
 const ImageDictionary = () => {
     const [hasMounted, setHasMounted] = useState(false);
+    const [detectedWord, setDetectedWord] = useState("");
+    const [translatedWord, setTranslatedWord] = useState("");
+    const [imageUrl, setImageUrl] = useState("");
+    const [loading, setLoading] = useState(false);
+
     const {
         transcript,
         listening,
         resetTranscript,
-        browserSupportsSpeechRecognition
+        browserSupportsSpeechRecognition,
     } = useSpeechRecognition();
 
-    const [detectedWord, setDetectedWord] = useState('');
-    const [imageUrl, setImageUrl] = useState('');
-    const [translatedWord, setTranslatedWord] = useState('');
-    const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-        setHasMounted(true);
-    }, []);
-
-    const handleListen = () => {
-        resetTranscript();
-        setImageUrl('');
-        setTranslatedWord('');
-        setDetectedWord('');
-        SpeechRecognition.startListening({
-            continuous: false,
-            language: 'vi-VN'
-        }).then(r => console.log("Start listening", r));
-    };
+    useEffect(() => setHasMounted(true), []);
 
     useEffect(() => {
         if (!listening && transcript) {
-            setDetectedWord(transcript);
-            setLoading(true);
-            GenWords(transcript)
-                .then(({imageUrl, englishWord}) => {
-                    setImageUrl(imageUrl);
-                    setTranslatedWord(englishWord);
-                    speak(englishWord);
-                })
-                .catch(console.error)
-                .finally(() => setLoading(false));
+            processTranscript(transcript).then(r => console.log("processed", r));
         }
     }, [transcript, listening]);
+
+    const processTranscript = async (word: string) => {
+        try {
+            setDetectedWord(word);
+            setLoading(true);
+            const englishWord = await GoogleEnglishWord(word);
+            setTranslatedWord(englishWord);
+            speak(englishWord);
+            const image = await GoogleGenImage(englishWord);
+            setImageUrl(image);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleListen = () => {
+        resetTranscript();
+        setDetectedWord("");
+        setTranslatedWord("");
+        setImageUrl("");
+        SpeechRecognition.startListening({continuous: false, language: "vi-VN"}).then(r => console.log(r));
+    };
 
     if (!hasMounted) return null;
     if (!browserSupportsSpeechRecognition) {
@@ -66,39 +65,45 @@ const ImageDictionary = () => {
     }
 
     return (
-        <div>
+        <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
             {(detectedWord || translatedWord) && (
-                <Typography variant="h3" component="h3" sx={{display: 'flex', alignItems: 'center', gap: 2}}>
+                <Typography variant="h3" component="h3" sx={{display: "flex", alignItems: "center", gap: 2}}>
                     {detectedWord}
                     {translatedWord && (
                         <>
-                            <span style={{fontSize: '0.8em', color: '#666'}}>→</span>
-                            <span style={{fontSize: '1.2em'}}>{translatedWord}</span>
+                            <span style={{fontSize: "0.8em", color: "#666"}}>→</span>
+                            <span style={{fontSize: "1.2em"}}>{translatedWord}</span>
                             <IconButton
                                 onClick={() => speak(translatedWord)}
                                 aria-label="speak"
-                                sx={{ml: 1, color: 'white', backgroundColor: 'blue'}}
+                                sx={{ml: 1, color: "white", backgroundColor: "blue"}}
                             >
-                                <PlayArrowIcon/>
+                                <PlayArrowOutlinedIcon/>
                             </IconButton>
                         </>
                     )}
                 </Typography>
             )}
-            {loading && <p>Loading...</p>}
-            {!loading && imageUrl && (
-                <>
+            {loading ? (
+                <CircularProgress/>
+            ) : (
+                imageUrl && (
                     <Image
                         src={imageUrl}
                         alt={translatedWord}
                         width={512}
                         height={512}
-                        style={{maxWidth: '100%', height: 'auto'}}
+                        style={{maxWidth: "100%", height: "auto"}}
                     />
-                </>
+                )
             )}
-            <Button onClick={handleListen} disabled={listening} variant="contained" style={{marginTop: "16px"}}>
-                {listening ? 'Listening...' : 'Start Listening'}
+            <Button
+                onClick={handleListen}
+                disabled={listening}
+                variant="contained"
+                sx={{mt: 2}}
+            >
+                {listening ? "Listening..." : "Start Listening"}
             </Button>
         </div>
     );
