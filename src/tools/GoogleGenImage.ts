@@ -1,26 +1,26 @@
 "use server";
-import {GoogleGenAI, Modality} from "@google/genai";
+import {GoogleGenAI} from "@google/genai";
 
 const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY!});
 
 export async function GoogleGenImage(prompt: string): Promise<string> {
     const p = `A detailed crayon pencil drawing of a ${prompt}, rendered with child-like innocence, cute and vibrant colors, set against a vintage yellowed grid paper.`;
-    const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash-preview-image-generation",
-        contents: p,
+    const response = await ai.models.generateImages({
+        model: "imagen-3.0-generate-002",
+        prompt: p,
         config: {
-            responseModalities: [Modality.TEXT, Modality.IMAGE],
+            numberOfImages: 1,
+            aspectRatio: "1:1",
         },
     });
 
     try {
         // @ts-expect-error fix it later
-        for (const part of response.candidates[0].content.parts) {
-            if (part.inlineData) {
-                const {mimeType, data} = part.inlineData;
-                return `data:${mimeType};base64,${data}`;
-            }
-        }
+        const generatedImage = response.generatedImages[0];
+        // @ts-expect-error fix it later
+        const imgBytes = generatedImage.image.imageBytes;
+        return `data:image/png;base64,${imgBytes}`
+
     } catch (e) {
         console.error(e);
     }
