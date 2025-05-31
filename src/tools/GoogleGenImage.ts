@@ -4,13 +4,17 @@ import {GoogleGenAI} from "@google/genai";
 const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY!});
 
 export async function GoogleGenImage(prompt: string): Promise<string> {
-    const p = `A detailed crayon pencil drawing of a ${prompt}, rendered with child-like innocence, cute and vibrant colors, set against a vintage yellowed grid paper.`;
+    const p = `A crayon drawing of a ${prompt} by a 4-year-old child on yellow grid paper, with scribbly lines and bright colors. 
+    The drawing shows the joy and rich imagination of a child, clearly expressed through bold, rough strokes and vibrant use of color.
+    The yellow grid paper adds a playful contrast to the crayon’s bright tones.`;
     const response = await ai.models.generateImages({
         model: "imagen-3.0-generate-002",
         prompt: p,
         config: {
             numberOfImages: 1,
             aspectRatio: "1:1",
+            outputMimeType: "image/jpeg",
+            outputCompressionQuality: 70
         },
     });
 
