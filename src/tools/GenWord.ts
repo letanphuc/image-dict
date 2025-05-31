@@ -30,6 +30,8 @@ export async function GenWords(input: string): Promise<GenWordsResult> {
         model: "black-forest-labs/FLUX.1-dev",
         prompt: `a crayon pencil drawing by a child, cute, colorful, innocent, and simple, of a ${englishWord}`,
         response_format: "url",
+        height: 512,
+        width: 512
     });
 
     const imageUrl = image.data[0].url || '';

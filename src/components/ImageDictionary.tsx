@@ -91,8 +91,8 @@ const ImageDictionary = () => {
                     <Image
                         src={imageUrl}
                         alt={translatedWord}
-                        width={600}
-                        height={400}
+                        width={512}
+                        height={512}
                         style={{maxWidth: '100%', height: 'auto'}}
                     />
                 </>
