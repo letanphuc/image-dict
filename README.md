@@ -3,6 +3,8 @@
 A modern web application that helps users visualize words through images, built with Next.js. This project provides an interactive interface for generating and viewing images based on word inputs.
 This application is designed to get words from the user and generate English words with images using the Google Custom Search API or Together AI for image generation. It features a responsive design and is built with TypeScript for type safety.
 
+![img.png](doc/img.png)
+
 ## Features
 
 - 🖼️ Interactive image dictionary interface
